@@ -9,6 +9,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 import stanza
+from nltk.tokenize import sent_tokenize as nltk_sent_tokenize
 from rouge_score import rouge_scorer
 from tqdm import tqdm
 
@@ -16,16 +17,21 @@ LOWER = False
 LENGTH_THRESHOLD = 10
 rouge_factors = {'rouge1': 0.4, 'rouge2': 0.3, 'rougeL': 0.3}  
 
-def sent_tokenize(doc):
-    doc = nlp(doc)
-    sentences = []
-    for sentence in doc.sentences:
-        # print(sentence.tokens[0])
-        sentence = ' '.join([token.text for token in sentence.tokens])
-        if len(sentence) > LENGTH_THRESHOLD:
-            sentences.append(sentence)
+
+## This is stanza tokenizer, it is more accurate but much slower than nltk tokenizer
+# def sent_tokenize(doc):
+#     doc = nlp(doc)
+#     sentences = []
+#     for sentence in doc.sentences:
+#         # print(sentence.tokens[0])
+#         sentence = ' '.join([token.text for token in sentence.tokens])
+#         if len(sentence) > LENGTH_THRESHOLD:
+#             sentences.append(sentence)
     
-    return sentences
+#     return sentences
+
+def sent_tokenize(doc):
+    return nltk_sent_tokenize(doc)
 
 def reconstruct_text(text):
     return re.sub('\s([?.!"](?:\s|$))', '', text)
@@ -42,9 +48,7 @@ def make_label(doc, sum, scorer):
     doc_size = len(doc)
     res = [0] * doc_size
     n = min(len(sum), doc_size)
-    # f1 of rouge-L
     for j in range(n):
-        # score = [scorer.score(sum[j], sent_i)['rouge2'][2] for sent_i in doc]
         score = [scorer.score(sum[j], sent_i) for sent_i in doc]
         score = [( 
             # x['rouge1'][2] * rouge_factors['rouge1'] + \
@@ -114,8 +118,9 @@ if __name__ == '__main__':
 
 
     # stanza.download(lang='en')
-    nlp = stanza.Pipeline(lang='en', processors='tokenize')
+    # nlp = stanza.Pipeline(lang='en', processors='tokenize')
 
     base_write_dir = 'data/cnndm/cnn'
     process_and_write('cnn/stories', valid_files, os.path.join(base_write_dir, 'valid'))
     process_and_write('cnn/stories', train_files, os.path.join(base_write_dir, 'train'))
+    process_and_write('cnn/stories', test_files, os.path.join(base_write_dir, 'test'))

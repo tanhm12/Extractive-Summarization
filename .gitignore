@@ -3,5 +3,7 @@
 cnn_stories.tgz
 cnn/
 data/cnndm/cnn/
+data/cnndm/cnnv0/
 uncased_L-4_H-256_A-4/
 save/cnn_old/
+save/cnn/
