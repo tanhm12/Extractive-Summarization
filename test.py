@@ -9,16 +9,8 @@ from torch.utils.data import DataLoader
 from rouge_score import rouge_scorer
 
 from data_utils import ESDataset, collate_fn
-from model import Model
+from model import Model, torch_load_all
 from config import CNNConfig
-
-
-def torch_load_all(dir):
-    save_dict = {}
-    for name in os.listdir(dir):
-        save_dict[name.replace('.pt', '')] = torch.load(os.path.join(dir, name))
-    
-    return save_dict
 
 scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeLsum'], use_stemmer=True)
 
@@ -35,7 +27,7 @@ def load_text(dir, return_sum=False):
     return docs, labels
 
 
-def get_test_loader(docs, config):
+def get_test_loader(tokenizer, docs, config):
     encodings = []
     for doc in docs:
         encodings.append(tokenizer(doc[:config.MAX_DOC_LEN], truncation=True,
@@ -47,9 +39,9 @@ def get_test_loader(docs, config):
     return test_loader
 
 
-def get_all_probs(model, all_doc, config):
+def get_all_probs(model, tokenizer, all_doc, config):
     res = []
-    test_loader = get_test_loader(all_doc, config=config)
+    test_loader = get_test_loader(tokenizer, all_doc, config=config)
     for item in tqdm(test_loader):
         ids = item['input_ids'].to(config.device)
         document_mask = item['document_mask'].to(config.device)
@@ -108,7 +100,8 @@ def test(documents, summaries, all_probs, choose_summary=choose_summary, k=3, sa
 
 
 if __name__ == '__main__':
-    final_dict = torch_load_all('save/cnn/best-model-f1')
+    # load the trained model
+    final_dict = torch_load_all('save/cnn/best-model')
     config: CNNConfig = final_dict['config']
 
     bert = config.bert_type.from_pretrained(config.bert_name)
@@ -117,13 +110,15 @@ if __name__ == '__main__':
     model.load_state_dict(final_dict['model_state_dict'])
     model.eval()
 
+    # load test text (pre-processed)
     test_texts, test_dict_labels, test_summaries = load_text(config.test_data_dir, return_sum=True)
 
     test_ids = list(test_texts.keys())
     docs = [test_texts[i] for i in test_ids]
     summaries = [test_summaries[i] for i in test_ids]
 
-    probs = get_all_probs(model, docs, config)
+    # test model
+    probs = get_all_probs(model, tokenizer, docs, config)
     test(docs, summaries, probs, choose_summary, k=3, save_dir='./save/cnn_test_result')
 
 

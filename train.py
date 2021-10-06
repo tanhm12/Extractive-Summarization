@@ -10,7 +10,7 @@ from tqdm import tqdm
 from sklearn.metrics import classification_report, f1_score
 
 from config import CNNConfig
-from model import Model
+from model import Model, torch_load_all, torch_save
 from data_utils import ESDataset, collate_fn
 
 
@@ -41,18 +41,15 @@ def get_encodings(docs, labels, toknizer=tokenizer, config=config):
     
     return keys, encodings, return_labels
 
-def torch_save(dir, save_dict):
-    os.makedirs(dir, exist_ok=True)
 
-    for name in save_dict:
-        torch.save(save_dict[name], os.path.join(dir, name + '.pt'))
-    
-def torch_load_all(dir):
-    save_dict = {}
-    for name in os.listdir(dir):
-        save_dict[name.replace('.pt', '')] = torch.load(os.path.join(dir, name))
-    
-    return save_dict
+def train_iter(model, item, config):
+    ids = item['input_ids'].to(config.device)
+    document_mask = item['document_mask'].to(config.device)
+    attention_mask = item['attention_mask'].to(config.device)
+    label = item['labels']
+    logits, loss = model(ids, document_mask, attention_mask, y=label)
+
+    return logits, loss
 
 
 def train(model, train_loader, val_loader, optimizer=None, scheduler=None, config=config, start_epoch=0):
@@ -76,11 +73,7 @@ def train(model, train_loader, val_loader, optimizer=None, scheduler=None, confi
         total_loss = []
         print('Epoch {} started on {}'.format(epoch, datetime.now().strftime('%d/%m/%Y %H:%M:%S')))
         for step, item in enumerate(tqdm(train_loader)):
-            ids = item['input_ids'].to(config.device)
-            document_mask = item['document_mask'].to(config.device)
-            attention_mask = item['attention_mask'].to(config.device)
-            label = item['labels']
-            logits, loss = model(ids, document_mask, attention_mask, y=label)
+            logits, loss = train_iter(model, item, config)
             
             loss = loss / gradient_accumulation_steps
             loss.backward()
@@ -148,11 +141,8 @@ def eval(model, val_loader, get_report=True):
 
     with torch.no_grad():
         for item in val_loader:
-            ids = item['input_ids'].to(config.device)
-            document_mask = item['document_mask'].to(config.device)
-            attention_mask = item['attention_mask'].to(config.device)
             labels = item['labels']
-            logits, loss = model(ids, document_mask, attention_mask, y=labels)
+            logits, loss = train_iter(model, item, config)
             
             prob = logits
             batch_y_true = []

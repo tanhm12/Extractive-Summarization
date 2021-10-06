@@ -33,8 +33,8 @@ rouge_factors = {'rouge1': 0.4, 'rouge2': 0.3, 'rougeL': 0.3}
 def sent_tokenize(doc):
     return nltk_sent_tokenize(doc)
 
-def reconstruct_text(text):
-    return re.sub('\s([?.!"](?:\s|$))', '', text)
+# def reconstruct_text(text):
+#     return re.sub('\s([?.!"](?:\s|$))', '', text)
 
 def parse_file(file):
     with open(file, encoding='utf-8') as f:

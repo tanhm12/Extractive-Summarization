@@ -1,4 +1,5 @@
 import torch 
+import os
 from config import CNNConfig
 
 from sklearn.utils import shuffle
@@ -35,7 +36,7 @@ class Bert_Embedding(nn.Module):
         x = x.reshape((batch*doc_len, seq_len))
         attention_mask = attention_mask.reshape((batch*doc_len, seq_len))        
 
-        last_hds, pooler_output, hidden_states = self.bert(x, attention_mask, output_hidden_states=True)
+        last_hds, pooler_output, hidden_states = self.bert(x, attention_mask, output_hidden_states=True, return_dict=False)
         embeddings = torch.cat(hidden_states[-self.get_n_layers:], axis=-1)  # batch, doc_len, seq_len, self.bert_hidden
         # print(embeddings.shape)
         embeddings = embeddings.reshape((batch * doc_len, 1,  seq_len, self.bert_hidden))  # batch * doc_len, 1, MAX_SEQ_LEN, bert_hidden
@@ -120,3 +121,18 @@ class Model(nn.Module):
 
     def predict(self, tokenizer, doc):
         pass
+
+
+def torch_save(dir, save_dict):
+    os.makedirs(dir, exist_ok=True)
+
+    for name in save_dict:
+        torch.save(save_dict[name], os.path.join(dir, name + '.pt'))
+    
+def torch_load_all(dir):
+    save_dict = {}
+    for name in os.listdir(dir):
+        if 'config' not in name:
+            save_dict[name.replace('.pt', '')] = torch.load(os.path.join(dir, name), map_location=torch.device('cpu'))
+
+    return save_dict
