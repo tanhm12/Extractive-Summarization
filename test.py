@@ -108,7 +108,7 @@ if __name__ == '__main__':
     tokenizer = config.tokenizer_type.from_pretrained(config.bert_name)
     model = Model(bert, config).to(config.device)
     model.load_state_dict(final_dict['model_state_dict'])
-    model.eval()
+    # model.eval()
 
     # load test text (pre-processed)
     test_texts, test_dict_labels, test_summaries = load_text(config.test_data_dir, return_sum=True)

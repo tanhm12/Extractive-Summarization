@@ -132,7 +132,6 @@ def torch_save(dir, save_dict):
 def torch_load_all(dir):
     save_dict = {}
     for name in os.listdir(dir):
-        if 'config' not in name:
-            save_dict[name.replace('.pt', '')] = torch.load(os.path.join(dir, name), map_location=torch.device('cpu'))
+        save_dict[name.replace('.pt', '')] = torch.load(os.path.join(dir, name), map_location=torch.device('cpu'))
 
     return save_dict
