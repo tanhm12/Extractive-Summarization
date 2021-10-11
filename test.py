@@ -100,8 +100,11 @@ def test(documents, summaries, all_probs, choose_summary=choose_summary, k=3, sa
 
 
 if __name__ == '__main__':
+    best_model_dir = 'save/cnn/best-model'
+    save_result_dir = './save/cnn_test_result'
+
     # load the trained model
-    final_dict = torch_load_all('save/cnn/best-model')
+    final_dict = torch_load_all(best_model_dir)
     config: CNNConfig = final_dict['config']
 
     bert = config.bert_type.from_pretrained(config.bert_name)
@@ -119,6 +122,6 @@ if __name__ == '__main__':
 
     # test model
     probs = get_all_probs(model, tokenizer, docs, config)
-    test(docs, summaries, probs, choose_summary, k=3, save_dir='./save/cnn_test_result')
+    test(docs, summaries, probs, choose_summary, k=3, save_dir=save_result_dir)
 
 

@@ -9,7 +9,7 @@ from rouge_score import rouge_scorer
 from tqdm import tqdm
 from sklearn.metrics import classification_report, f1_score
 
-from config import CNNConfig
+from config import CNNConfig, VietnewsConfig
 from model import Model, torch_load_all, torch_save
 from data_utils import ESDataset, collate_fn
 
@@ -17,7 +17,8 @@ from data_utils import ESDataset, collate_fn
 import torch
 from torch.utils.data import DataLoader
 
-config = CNNConfig()
+# config = CNNConfig()
+config = VietnewsConfig()
 tokenizer = config.tokenizer_type.from_pretrained(config.bert_name)
 
 def load_json(file):
@@ -66,7 +67,7 @@ def train(model, train_loader, val_loader, optimizer=None, scheduler=None, confi
 
     if optimizer is None:
         optimizer = torch.optim.AdamW(model.parameters(), lr=3e-5)
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=5e-3, epochs=epochs, steps_per_epoch=len(train_loader.dataset))
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=2e-3, epochs=epochs, steps_per_epoch=len(train_loader.dataset))
     print_after = int(print_freq * len(train_loader.dataset) / batch_size)
     for epoch in range(start_epoch, epochs):
         print_counter = 0
@@ -186,4 +187,7 @@ if __name__ == '__main__':
     bert = config.bert_type.from_pretrained(config.bert_name)
     model = Model(bert, config=config).to(config.device)
     train(model, train_loader, val_loader, config=config)
+
+
+
 
