@@ -10,7 +10,7 @@ from rouge_score import rouge_scorer
 
 from data_utils import ESDataset, collate_fn
 from model import Model, torch_load_all
-from config import CNNConfig
+from config import CNNConfig, VietnewsConfig
 
 scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeLsum'], use_stemmer=True)
 
@@ -100,18 +100,28 @@ def test(documents, summaries, all_probs, choose_summary=choose_summary, k=3, sa
 
 
 if __name__ == '__main__':
-    best_model_dir = 'save/cnn/best-model'
-    save_result_dir = './save/cnn_test_result'
+    # # for cnn data
+    # best_model_dir = 'save/cnn/best-model'
+    # save_result_dir = './save/cnn_test_result'
+    # config_type = CNNConfig
+    # k=3
+    
+    # for vietnews data
+    best_model_dir = 'save/vietnews/checkpoint_2'
+    save_result_dir = './save/vietnews_test_result'
+    config_type = VietnewsConfig
+    k=1
 
     # load the trained model
     final_dict = torch_load_all(best_model_dir)
-    config: CNNConfig = final_dict['config']
+    config: config_type = final_dict['config']
+    config.device = 'cuda:0'
 
     bert = config.bert_type.from_pretrained(config.bert_name)
     tokenizer = config.tokenizer_type.from_pretrained(config.bert_name)
     model = Model(bert, config).to(config.device)
     model.load_state_dict(final_dict['model_state_dict'])
-    # model.eval()
+    model.eval()
 
     # load test text (pre-processed)
     test_texts, test_dict_labels, test_summaries = load_text(config.test_data_dir, return_sum=True)
@@ -122,6 +132,6 @@ if __name__ == '__main__':
 
     # test model
     probs = get_all_probs(model, tokenizer, docs, config)
-    test(docs, summaries, probs, choose_summary, k=3, save_dir=save_result_dir)
+    test(docs, summaries, probs, choose_summary, k=k, save_dir=save_result_dir)
 
 

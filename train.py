@@ -162,7 +162,7 @@ def eval(model, val_loader, get_report=True):
             total_loss.append(loss.item())
 
     if get_report:
-        print(classification_report(y_true, y_pred))
+        print(classification_report(y_true, y_pred, digits=4))
         
     model.train()    
     

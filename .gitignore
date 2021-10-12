@@ -5,7 +5,7 @@ cnn_stories.tgz
 cnn/
 data/cnndm/cnn/
 data/cnndm/cnnv0/
-data/vietnews/
+data/vietnews/data/
 data/vietnews_processed/
 uncased_L-4_H-256_A-4/
 save/cnn_old/
